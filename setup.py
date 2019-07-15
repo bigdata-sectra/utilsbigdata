@@ -8,5 +8,5 @@ setup(name='utilsbigdata',
       author_email='bigdata@sectra.gob.cl',
       license='MIT',
       packages=find_packages(),
-      install_requires = ['numpy', 'pandas'],
+      install_requires = ['numpy', 'pandas', 'requests'],
       zip_safe=False)
