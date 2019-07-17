@@ -45,7 +45,7 @@ class waze_data_analyzer:
         #Flagging outliers with iqr and mad-z...
         self.df_tt = retrieve_data.flag_with_iqr(self.df_tt, iqr_distance, agg_type)
         self.df_tt = retrieve_data.flag_with_mad_z(self.df_tt, agg_type)
-        self.df_tt.loc[:,'outlier'] = np.where((original_df_tt['outlier_iqr']==1)|(original_df_tt['outlier_z_score']==1), 1, 0)
+        self.df_tt.loc[:,'outlier'] = np.where((self.df_tt['outlier_iqr']==1)|(self.df_tt['outlier_z_score']==1), 1, 0)
         
         #Cleaning df_tt from not-used columns
         self.df_tt.drop(['no_flow_periods','no_flow_boolean'], axis=1, inplace=True)
