@@ -38,14 +38,14 @@ def read_dict(github_user, github_token):
     dict_tramos_df = pd.read_csv(pd.compat.StringIO(dict_tramos_r.text), sep=';')
     return dict_tramos_df
 
-def filter_by_project(df_tt,dict_tramos_df,project):
-    initial_length = len(df_tt.index)
+def filter_by_project(df,dict_tramos_df,project):
+    initial_length = len(df.index)
     routes = dict_tramos_df.loc[(dict_tramos_df['project'] == project)&(dict_tramos_df['deprecated'] != 1),'name'].to_list()
-    df_tt = df_tt[df_tt['name'].isin(routes)]
-    final_length = len(df_tt.index)
+    df = df[df['name'].isin(routes)]
+    final_length = len(df.index)
     print('The number of deleted rows when filtering by project is: ' + str(initial_length - final_length))
     print('The current number of rows is: ' + str(final_length))
-    return df_tt
+    return df
 
 def drop_duplicates(df_tt):
     initial_length = len(df_tt.index)
