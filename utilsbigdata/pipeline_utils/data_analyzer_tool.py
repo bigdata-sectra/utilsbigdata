@@ -45,7 +45,43 @@ class waze_data_analyzer:
         #Flagging outliers with iqr and mad-z...
         self.df_tt = retrieve_data.flag_with_iqr(self.df_tt, iqr_distance, agg_type)
         self.df_tt = retrieve_data.flag_with_mad_z(self.df_tt, agg_type)
+        self.df_tt.loc[:,'outlier'] = np.where((original_df_tt['outlier_iqr']==1)|(original_df_tt['outlier_z_score']==1), 1, 0)
+        
+        #Cleaning df_tt from not-used columns
+        self.df_tt.drop(['no_flow_periods','no_flow_boolean'], axis=1, inplace=True)
 
-    def run_advanced_data_pipeline(self):
-        #TODO...
-        pass
+    def get_sections_order(self):
+        self.df_tt['order'] = self.df_tt['name'].apply(lambda x: x.split('_')[4])
+
+    def get_same_section_previous_time(self):
+        #This should be checked by somebody else...
+        self.df_tt.sort_values(by=['name', 'updatetime'], ascending=[True, True], inplace = True)
+        self.df_tt['same_section'] = (self.df_tt['name']==self.df_tt['name'].shift())
+        self.df_tt['not_hole'] = (self.df_tt['updatetime'] - self.df_tt['updatetime'].shift() <= pd.Timedelta('10 minutes'))
+        self.df_tt.loc[(self.df_tt['same_section']==True)&(self.df_tt['not_hole']==True), '[s/km]_i,t-1'] = self.df_tt['[s/km]'].shift()
+
+    def get_time_delta(self):
+        self.df_tt.loc[(self.df_tt['same_section']==True)&(self.df_tt['not_hole']==True), 'updatetime_i,t-1'] = self.df_tt['updatetime'].shift()
+        self.df_tt.loc[:, 'delta_t'] = self.df_tt['updatetime'] - self.df_tt['updatetime_i,t-1']
+        self.df_tt['delta_t'] = self.df_tt['delta_t'].apply(lambda x : x.total_seconds())
+
+    def get_previous_section_previous_time(self):
+        #This should be checked by somebody else...
+        self.df_tt.sort_values(by=['updatetime','main_street','sense','order'], ascending=[True, True, True, True], inplace = True)
+        self.df_tt['same_section'] = ((self.df_tt['main_street']==self.df_tt['main_street'].shift())&(self.df_tt['sense']==self.df_tt['sense'].shift()))
+        self.df_tt.loc[(self.df_tt['same_section']==True)&(self.df_tt['order']!=1), '[s/km]_i-1,t-1'] = self.df_tt['[s/km]_i,t-1'].shift()
+
+    def get_next_section_previous_time(self):
+        #This should be checked by somebody else...
+        self.df_tt['same_section'] = ((self.df_tt['main_street']==self.df_tt['main_street'].shift(-1))&(self.df_tt['sense']==self.df_tt['sense'].shift(-1)))
+        self.df_tt['same_updatetime'] = ((self.df_tt['main_street']==self.df_tt['main_street'].shift(-1))&(self.df_tt['updatetime']==self.df_tt['updatetime'].shift(-1)))
+        self.df_tt.loc[(self.df_tt['same_section']==True)&(self.df_tt['same_updatetime']==True), '[s/km]_i+1,t-1'] = self.df_tt['[s/km]_i,t-1'].shift(-1)
+
+    def make_feature_explosion(self):
+        #Getting dummies only for name, weekday and floor_hour
+        self.df_tt.sort_values(by=['name', 'updatetime'], ascending=[True, True], inplace = True) #just in case...
+        self.df_tt = pd.get_dummies(self.df_tt, columns = ['name','weekday','floor_hour'])
+
+    def merge_traffic_info(self):
+        self.df_tt = self.df_tt.merge(self.df_dict[['name','traffic_lights','priority','pedestrian_crossing','NI']], on = 'name', how = 'left')
+

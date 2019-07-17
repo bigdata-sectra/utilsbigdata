@@ -78,7 +78,7 @@ def delete_no_flow_periods(df_tt,dict_df):
     df_tt = df_tt.loc[pd.notnull(df_tt['time']),:]
     final_length = len(df_tt.index)
     print('The number of deleted rows with no-flow is: ' + str(initial_length - final_length))
-    print('The current number of rows is: ' + str(final_length))
+    print('The final number of rows is: ' + str(final_length))
     return df_tt
 
 def compute_delay_velocity(df_tt, df_r):    
