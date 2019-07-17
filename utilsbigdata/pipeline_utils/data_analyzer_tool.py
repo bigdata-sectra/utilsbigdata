@@ -77,11 +77,10 @@ class waze_data_analyzer:
         self.df_tt['same_updatetime'] = ((self.df_tt['main_street']==self.df_tt['main_street'].shift(-1))&(self.df_tt['updatetime']==self.df_tt['updatetime'].shift(-1)))
         self.df_tt.loc[(self.df_tt['same_section']==True)&(self.df_tt['same_updatetime']==True), '[s/km]_i+1,t-1'] = self.df_tt['[s/km]_i,t-1'].shift(-1)
 
+    def merge_traffic_info(self):
+        self.df_tt = self.df_tt.merge(self.df_dict[['name','traffic_lights','priority','pedestrian_crossing','NI']], on = 'name', how = 'left')
+
     def make_feature_explosion(self):
         #Getting dummies only for name, weekday and floor_hour
         self.df_tt.sort_values(by=['name', 'updatetime'], ascending=[True, True], inplace = True) #just in case...
         self.df_tt = pd.get_dummies(self.df_tt, columns = ['name','weekday','floor_hour'])
-
-    def merge_traffic_info(self):
-        self.df_tt = self.df_tt.merge(self.df_dict[['name','traffic_lights','priority','pedestrian_crossing','NI']], on = 'name', how = 'left')
-
