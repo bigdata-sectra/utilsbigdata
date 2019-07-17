@@ -6,11 +6,11 @@ from utilsbigdata.pipeline_utils import retrieve_data
 
 class waze_data_analyzer:
 
-    def __init__(self, files_dir, extraction_date):
+    def __init__(self, files_dir, files_date):
 
         #Paths and dates.
         self.files_dir = files_dir
-        self.extraction_date = extraction_date
+        self.files_date = files_date
         
         # class variable shared by all instances. They'll be modified when calling functions of static nature.
         self.df_tt = pd.DataFrame() 
@@ -19,8 +19,8 @@ class waze_data_analyzer:
 
     def run_basic_data_pipeline(self, project, freq, agg_type, iqr_distance, github_user, github_token):
         #Building the necessary paths...
-        tt_dir = self.files_dir / ('travel_times_' + self.extraction_date + '.csv')
-        r_dir = self.files_dir / ('routes_' + self.extraction_date + '.csv')
+        tt_dir = self.files_dir / ('travel_times_' + self.files_date + '.csv')
+        r_dir = self.files_dir / ('routes_' + self.files_date + '.csv')
 
         #Reading travel_times, routes and dictionary
         self.df_tt = retrieve_data.read_tt_data(tt_dir)
