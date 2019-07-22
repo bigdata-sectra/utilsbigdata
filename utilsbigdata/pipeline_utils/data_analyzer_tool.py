@@ -89,5 +89,6 @@ class waze_data_analyzer:
 
     def make_feature_explosion(self):
         #Getting dummies only for name, weekday and floor_hour
-        self.df_tt.sort_values(by=['name', 'updatetime'], ascending=[True, True], inplace = True) #just in case...
-        self.df_tt = pd.get_dummies(self.df_tt, columns = ['name','weekday','floor_hour'])
+        self.df_tt.sort_values(by=['name', 'updatetime'], ascending=[True, True], inplace = True) #just in case
+        dummified_df = pd.get_dummies(self.df_tt[['name','weekday','floor_hour']], columns = ['name','weekday','floor_hour'])
+        self.df_tt = self.df_tt.join(dummified_df)
