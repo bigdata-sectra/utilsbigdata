@@ -54,7 +54,7 @@ def read_meteorological_data(meteo_dir):
 
     return water_df, temperature_df
 
-def process_meteorological_data(water_df, temp_df, freq):
+def process_meteorological_data(water_df, temperature_df, freq):
     water_df['momento'] = uf.lookup(water_df['momento'])
     water_df['date'] = water_df['momento'].dt.date
     water_df['floor_hour'] = water_df['momento'].dt.floor(freq).dt.time
