@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import requests
-from utilsbigdata.pipeline_utils import retrieve_data
+from pipeline_utils import retrieve_data
 
 
 class waze_data_analyzer:
@@ -29,6 +29,7 @@ class waze_data_analyzer:
         
         #Filtering by project...
         self.df_tt = retrieve_data.filter_by_project(self.df_tt, self.df_dict, project)
+        self.df_r = retrieve_data.filter_by_project(self.df_r, self.df_dict, project)
         
         #Dropping duplicates...
         self.df_tt = retrieve_data.drop_duplicates(self.df_tt)
@@ -84,3 +85,8 @@ class waze_data_analyzer:
         #Getting dummies only for name, weekday and floor_hour
         self.df_tt.sort_values(by=['name', 'updatetime'], ascending=[True, True], inplace = True) #just in case...
         self.df_tt = pd.get_dummies(self.df_tt, columns = ['name','weekday','floor_hour'])
+
+    def make_network_features(self):
+        matrices = retrieve_data.create_network_features_matrices(self.df_r) # horizontal, vertical, angle
+        for i in range(0, len(matrices)):
+            self.df_tt = self.df_tt.merge(matrices[i], on = 'name', how = 'left', right_index = True)
