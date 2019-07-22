@@ -63,7 +63,7 @@ def process_meteorological_data(water_df, temperature_df, freq):
     temperature_df['momento'] = uf.lookup(temperature_df['momento'])
     temperature_df['date'] = temperature_df['momento'].dt.date    
     temperature_df['floor_hour'] = temperature_df['momento'].dt.floor(freq).dt.time
-    grouped_temperature_df = temperature_df.groupby(by = ['date','floor_hour']).agg({'ts':mean}).reset_index()
+    grouped_temperature_df = temperature_df.groupby(by = ['date','floor_hour']).agg({'ts':np.mean}).reset_index()
 
     return [grouped_water_df, grouped_temperature_df]
 
