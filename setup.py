@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(name='utilsbigdata',
-      version='0.5',
+      version='0.6',
       description='Utils for Big Data - MTT',
       url='git@github.com:bigdata-sectra/utilsbigdata.git',
       author='Big Data - MTT',

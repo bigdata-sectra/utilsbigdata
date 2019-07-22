@@ -48,7 +48,7 @@ def read_meteorological_data(meteo_dir):
     water_files = glob.glob(os.path.join(water_dir, "*.csv"))
     water_df = pd.concat((pd.read_csv(f, sep=";", usecols = water_cols) for f in water_files))
 
-    temperature_dir = meteorological_dir / 'temperatura'
+    temperature_dir = meteo_dir / 'temperatura'
     temperature_files = glob.glob(os.path.join(temperature_dir, "*.csv"))
     temperature_df = pd.concat((pd.read_csv(f, sep=";", usecols = temperature_cols) for f in temperature_files))
 
