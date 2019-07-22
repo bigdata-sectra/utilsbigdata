@@ -6,6 +6,8 @@ import ast
 import math
 import time
 import numpy as np
+import glob
+import os
 
 def read_tt_data(tt_dir):
 
@@ -37,6 +39,33 @@ def read_dict(github_user, github_token):
     dict_tramos_r.encoding = 'latin-1'
     dict_tramos_df = pd.read_csv(pd.compat.StringIO(dict_tramos_r.text), sep=';')
     return dict_tramos_df
+
+def read_meteorological_data(meteo_dir):
+    water_cols = ['momento','rrInst']
+    temperature_cols = ['momento','ts']
+
+    water_dir = meteo_dir / 'agua'
+    water_files = glob.glob(os.path.join(water_dir, "*.csv"))
+    water_df = pd.concat((pd.read_csv(f, sep=";", usecols = water_cols) for f in water_files))
+
+    temperature_dir = meteorological_dir / 'temperatura'
+    temperature_files = glob.glob(os.path.join(temperature_dir, "*.csv"))
+    temperature_df = pd.concat((pd.read_csv(f, sep=";", usecols = temperature_cols) for f in temperature_files))
+
+    return water_df, temperature_df
+
+def process_meteorological_data(water_df, temp_df, freq):
+    water_df['momento'] = uf.lookup(water_df['momento'])
+    water_df['date'] = water_df['momento'].dt.date
+    water_df['floor_hour'] = water_df['momento'].dt.floor(freq).dt.time
+    grouped_water_df = water_df.groupby(by = ['date','floor_hour']).agg({'rrInst':sum}).reset_index()
+    
+    temperature_df['momento'] = uf.lookup(temperature_df['momento'])
+    temperature_df['date'] = temperature_df['momento'].dt.date    
+    temperature_df['floor_hour'] = temperature_df['momento'].dt.floor(freq).dt.time
+    grouped_temperature_df = temperature_df.groupby(by = ['date','floor_hour']).agg({'ts':mean}).reset_index()
+
+    return [grouped_water_df, grouped_temperature_df]
 
 def filter_by_project(df_tt,dict_tramos_df,project):
     initial_length = len(df_tt.index)
