@@ -1,4 +1,4 @@
-from statistic_utils import useful_functs as uf
+from utilsbigdata.statistic_utils import useful_functs as uf
 import pandas as pd
 
 import requests

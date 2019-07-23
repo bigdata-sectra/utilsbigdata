@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import requests
-from pipeline_utils import retrieve_data
+from utilsbigdata.pipeline_utils import retrieve_data
 
 
 class waze_data_analyzer:
