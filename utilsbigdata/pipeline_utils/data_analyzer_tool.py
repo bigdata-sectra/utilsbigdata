@@ -27,7 +27,7 @@ class waze_data_analyzer:
         if github_user != None and github_token != None:
             self.df_dict = retrieve_data.read_dict(github_user, github_token)
 
-    def run_basic_data_pipeline(self, project, freq = '15min', agg_type = 'daytype', iqr_distance = 1.5, ):
+    def run_basic_data_pipeline(self, project, freq = '15min', agg_type = 'daytype', iqr_distance = 1.5):
 
         #Filtering by project...
         self.df_tt = retrieve_data.filter_by_project(self.df_tt, self.df_dict, project)
