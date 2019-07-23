@@ -1,34 +1,37 @@
 import pandas as pd
 import numpy as np
 import requests
-from utilsbigdata.pipeline_utils import retrieve_data
+from pipeline_utils import retrieve_data
 
 
 class waze_data_analyzer:
 
-    def __init__(self, files_dir, extraction_date):
+    def __init__(self, files_dir, files_date, github_user = None, github_token = None):
 
         #Paths and dates.
         self.files_dir = files_dir
-        self.extraction_date = extraction_date
+        self.files_date = files_date
         
         # class variable shared by all instances. They'll be modified when calling functions of static nature.
         self.df_tt = pd.DataFrame() 
         self.df_r = pd.DataFrame()
         self.df_dict = pd.DataFrame()
 
-    def run_basic_data_pipeline(self, project, freq, agg_type, iqr_distance, github_user, github_token):
         #Building the necessary paths...
-        tt_dir = self.files_dir / ('travel_times_' + self.extraction_date + '.csv')
-        r_dir = self.files_dir / ('routes_' + self.extraction_date + '.csv')
+        tt_dir = self.files_dir / ('travel_times_' + self.files_date + '.csv')
+        r_dir = self.files_dir / ('routes_' + self.files_date + '.csv')
 
         #Reading travel_times, routes and dictionary
         self.df_tt = retrieve_data.read_tt_data(tt_dir)
         self.df_r = retrieve_data.read_r_data(r_dir)
-        self.df_dict = retrieve_data.read_dict(github_user, github_token)
-        
+        if github_user != None and github_token != None:
+            self.df_dict = retrieve_data.read_dict(github_user, github_token)
+
+    def run_basic_data_pipeline(self, project, freq = '15min', agg_type = 'daytype', iqr_distance = 1.5):
+
         #Filtering by project...
         self.df_tt = retrieve_data.filter_by_project(self.df_tt, self.df_dict, project)
+        self.df_r = retrieve_data.filter_by_project(self.df_r, self.df_dict, project)
         
         #Dropping duplicates...
         self.df_tt = retrieve_data.drop_duplicates(self.df_tt)
@@ -88,7 +91,20 @@ class waze_data_analyzer:
         self.df_tt = self.df_tt.merge(grouped_temperature_df, on = ['date','floor_hour'], how = 'left')
 
     def make_feature_explosion(self):
+        """
+        One hot encoding of name, weekday and floor_hour variables 
+        """
         #Getting dummies only for name, weekday and floor_hour
         self.df_tt.sort_values(by=['name', 'updatetime'], ascending=[True, True], inplace = True) #just in case
         dummified_df = pd.get_dummies(self.df_tt[['name','weekday','floor_hour']], columns = ['name','weekday','floor_hour'])
         self.df_tt = self.df_tt.join(dummified_df)
+
+    def make_network_features(self):
+        """
+        Calls create_network_features_matrices and merges the results
+        into the travel times data frame
+        """
+        matrices = retrieve_data.create_network_features_matrices(self.df_r) # horizontal, vertical, angle
+        for i in range(0, len(matrices)):
+            self.df_tt = self.df_tt.merge(matrices[i], on = 'name', how = 'left', right_index = True)
+        # print('columns on df_tt: ', list(self.df_tt.columns))

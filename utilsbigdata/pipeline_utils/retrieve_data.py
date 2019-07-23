@@ -1,4 +1,4 @@
-from utilsbigdata.statistic_utils import useful_functs as uf
+from statistic_utils import useful_functs as uf
 import pandas as pd
 
 import requests
@@ -6,6 +6,8 @@ import ast
 import math
 import time
 import numpy as np
+import math
+import ast
 import glob
 import os
 
@@ -67,14 +69,14 @@ def process_meteorological_data(water_df, temperature_df, freq):
 
     return [grouped_water_df, grouped_temperature_df]
 
-def filter_by_project(df_tt,dict_tramos_df,project):
-    initial_length = len(df_tt.index)
+def filter_by_project(df, dict_tramos_df, project):
+    initial_length = len(df.index)
     routes = dict_tramos_df.loc[(dict_tramos_df['project'] == project)&(dict_tramos_df['deprecated'] != 1),'name'].to_list()
-    df_tt = df_tt[df_tt['name'].isin(routes)]
-    final_length = len(df_tt.index)
-    print('The number of deleted rows when filtering by project is: ' + str(initial_length - final_length))
+    df = df[df['name'].isin(routes)]
+    final_length = len(df.index)
+    print('The number of deleted rows in when filtering by project is: ' + str(initial_length - final_length))
     print('The current number of rows is: ' + str(final_length))
-    return df_tt
+    return df
 
 def drop_duplicates(df_tt):
     initial_length = len(df_tt.index)
@@ -99,7 +101,7 @@ def parse_and_process_dates(df_tt, freq):
 
     return df_tt
 
-def delete_no_flow_periods(df_tt,dict_df):
+def delete_no_flow_periods(df_tt, dict_df):
     initial_length = len(df_tt.index)
     df_tt = df_tt.merge(dict_df[['name','main_street','sense','no_flow_periods']], on = ['name'], how = 'left')
     df_tt['no_flow_boolean'] = df_tt.apply(lambda row: uf.boolean_from_no_flow(row['hour_of_day'], row['daytype'], row['no_flow_periods']), axis=1)
@@ -145,3 +147,66 @@ def flag_with_mad_z(df_tt, agg_type):
                                                                                 row['[s/km]_mean_absolute_deviation_y'],
                                                                                 row['[s/km]_median_absolute_deviation_y']), axis=1)
     return df_tt
+
+def create_network_features_matrices(df_r):
+    """
+    Reads routes dataframe (filtered by project) and returns a list
+    of 2D matrices (Dataframes) containing horizontal distances, 
+    vertical distances and angle between routes
+    """
+    routes_lines = [ast.literal_eval(x) for x in df_r['line']]
+
+    matrix_n = len(routes_lines)
+    
+    horizontal = np.zeros(shape=(matrix_n,matrix_n))
+    vertical = np.zeros(shape=(matrix_n,matrix_n))
+    angle = np.zeros(shape=(matrix_n,matrix_n))
+
+    for i in range(0,matrix_n):
+        for j in range(0, matrix_n):
+            
+            lat_i_inicio = routes_lines[i][0][1]
+            lon_i_inicio = routes_lines[i][0][0]
+            lat_i_fin = routes_lines[i][-1][1]
+            lon_i_fin = routes_lines[i][-1][0]
+            
+            lat_j_inicio = routes_lines[j][0][1]
+            lon_j_inicio = routes_lines[j][0][0]
+            lat_j_fin = routes_lines[j][-1][1]
+            lon_j_fin = routes_lines[j][-1][0]
+            
+            rel_lat_i_fin = lat_i_fin - lat_i_inicio
+            rel_lon_i_fin = lon_i_fin - lon_i_inicio
+            
+            rel_lat_j_fin = lat_j_fin - lat_j_inicio
+            rel_lon_j_fin = lon_j_fin - lon_j_inicio
+            
+            length_i = math.sqrt((math.pow(rel_lat_i_fin,2) + math.pow(rel_lon_i_fin,2)))
+            
+            length_j = math.sqrt((math.pow(rel_lat_j_fin,2) + math.pow(rel_lon_j_fin,2)))
+            
+            dot = (rel_lon_i_fin * rel_lon_j_fin) + (rel_lat_i_fin * rel_lat_j_fin)      # dot product
+            det = (rel_lon_i_fin * rel_lat_j_fin) - (rel_lat_i_fin * rel_lon_j_fin)      # determinant
+
+            vertical[i,j] = lat_i_fin - lat_j_fin
+            horizontal[i,j] = lon_i_fin - lon_j_fin
+            angle[i,j] = math.degrees(math.atan2(det, dot))
+    
+    horizontal_df = pd.DataFrame(horizontal, columns = list(df_r['name']))
+    horizontal_df['name'] = list(df_r['name'])
+    horizontal_df.set_index('name', inplace = True)
+    horizontal_df.columns = [str(col) + '_h_dist' for col in horizontal_df.columns]
+    
+    vertical_df = pd.DataFrame(vertical, columns = list(df_r['name']))
+    vertical_df['name'] = list(df_r['name'])
+    vertical_df.set_index('name', inplace = True)
+    vertical_df.add_suffix('_v_dist')
+    vertical_df.columns = [str(col) + '_h_dist' for col in vertical_df.columns]
+
+    angle_df = pd.DataFrame(angle, columns = list(df_r['name']))
+    angle_df['name'] = list(df_r['name'])
+    angle_df.set_index('name', inplace = True)
+    angle_df.add_suffix('angle')
+    angle_df.columns = [str(col) + '_h_dist' for col in angle_df.columns]
+
+    return [horizontal_df, vertical_df, angle_df]
