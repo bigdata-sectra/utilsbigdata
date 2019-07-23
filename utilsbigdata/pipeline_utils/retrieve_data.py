@@ -40,12 +40,12 @@ def read_dict(github_user, github_token):
     dict_tramos_df = pd.read_csv(pd.compat.StringIO(dict_tramos_r.text), sep=';')
     return dict_tramos_df
 
-def filter_by_project(df,dict_tramos_df,project):
+def filter_by_project(df, dict_tramos_df, project):
     initial_length = len(df.index)
     routes = dict_tramos_df.loc[(dict_tramos_df['project'] == project)&(dict_tramos_df['deprecated'] != 1),'name'].to_list()
     df = df[df['name'].isin(routes)]
     final_length = len(df.index)
-    print('The number of deleted rows when filtering by project is: ' + str(initial_length - final_length))
+    print('The number of deleted rows in when filtering by project is: ' + str(initial_length - final_length))
     print('The current number of rows is: ' + str(final_length))
     return df
 
@@ -72,7 +72,7 @@ def parse_and_process_dates(df_tt, freq):
 
     return df_tt
 
-def delete_no_flow_periods(df_tt,dict_df):
+def delete_no_flow_periods(df_tt, dict_df):
     initial_length = len(df_tt.index)
     df_tt = df_tt.merge(dict_df[['name','main_street','sense','no_flow_periods']], on = ['name'], how = 'left')
     df_tt['no_flow_boolean'] = df_tt.apply(lambda row: uf.boolean_from_no_flow(row['hour_of_day'], row['daytype'], row['no_flow_periods']), axis=1)
@@ -166,16 +166,18 @@ def create_network_features_matrices(df_r):
     horizontal_df = pd.DataFrame(horizontal, columns = list(df_r['name']))
     horizontal_df['name'] = list(df_r['name'])
     horizontal_df.set_index('name', inplace = True)
-    horizontal_df.add_suffix('_h_dist')
+    horizontal_df.columns = [str(col) + '_h_dist' for col in horizontal_df.columns]
     
     vertical_df = pd.DataFrame(vertical, columns = list(df_r['name']))
     vertical_df['name'] = list(df_r['name'])
     vertical_df.set_index('name', inplace = True)
     vertical_df.add_suffix('_v_dist')
+    vertical_df.columns = [str(col) + '_h_dist' for col in vertical_df.columns]
 
     angle_df = pd.DataFrame(angle, columns = list(df_r['name']))
     angle_df['name'] = list(df_r['name'])
     angle_df.set_index('name', inplace = True)
     angle_df.add_suffix('angle')
+    angle_df.columns = [str(col) + '_h_dist' for col in angle_df.columns]
 
     return [horizontal_df, vertical_df, angle_df]
