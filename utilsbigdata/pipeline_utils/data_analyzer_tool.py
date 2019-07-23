@@ -83,13 +83,21 @@ class waze_data_analyzer:
     def merge_traffic_info(self):
         self.df_tt = self.df_tt.merge(self.df_dict[['name','traffic_lights','priority','pedestrian_crossing','NI']], on = 'name', how = 'left')
 
+    def get_meteorological_features(self, meteo_dir, freq):
+        [water_df, temperature_df] = retrieve_data.read_meteorological_data(meteo_dir)
+        [grouped_water_df, grouped_temperature_df] = retrieve_data.process_meteorological_data(water_df, temperature_df, freq)
+        
+        self.df_tt = self.df_tt.merge(grouped_water_df, on = ['date','floor_hour'], how = 'left')
+        self.df_tt = self.df_tt.merge(grouped_temperature_df, on = ['date','floor_hour'], how = 'left')
+
     def make_feature_explosion(self):
         """
         One hot encoding of name, weekday and floor_hour variables 
         """
         #Getting dummies only for name, weekday and floor_hour
-        self.df_tt.sort_values(by=['name', 'updatetime'], ascending=[True, True], inplace = True) #just in case...
-        self.df_tt = pd.get_dummies(self.df_tt, columns = ['name','weekday','floor_hour'])
+        self.df_tt.sort_values(by=['name', 'updatetime'], ascending=[True, True], inplace = True) #just in case
+        dummified_df = pd.get_dummies(self.df_tt[['name','weekday','floor_hour']], columns = ['name','weekday','floor_hour'])
+        self.df_tt = self.df_tt.join(dummified_df)
 
     def make_network_features(self):
         """
