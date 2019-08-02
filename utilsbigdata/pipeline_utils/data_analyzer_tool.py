@@ -83,7 +83,7 @@ class waze_data_analyzer:
     def merge_traffic_info(self):
         self.df_tt = self.df_tt.merge(self.df_dict[['name','traffic_lights','priority','pedestrian_crossing','NI']], on = 'name', how = 'left')
 
-    def get_meteorological_features(self, meteo_dir, freq):
+    def get_meteorological_features(self, meteo_dir, freq = '15min'):
         [water_df, temperature_df] = retrieve_data.read_meteorological_data(meteo_dir)
         [grouped_water_df, grouped_temperature_df] = retrieve_data.process_meteorological_data(water_df, temperature_df, freq)
         
