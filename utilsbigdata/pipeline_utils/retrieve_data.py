@@ -200,13 +200,11 @@ def create_network_features_matrices(df_r):
     vertical_df = pd.DataFrame(vertical, columns = list(df_r['name']))
     vertical_df['name'] = list(df_r['name'])
     vertical_df.set_index('name', inplace = True)
-    vertical_df.add_suffix('_v_dist')
-    vertical_df.columns = [str(col) + '_h_dist' for col in vertical_df.columns]
+    vertical_df.columns = [str(col) + '_v_dist' for col in vertical_df.columns]
 
     angle_df = pd.DataFrame(angle, columns = list(df_r['name']))
     angle_df['name'] = list(df_r['name'])
     angle_df.set_index('name', inplace = True)
-    angle_df.add_suffix('angle')
-    angle_df.columns = [str(col) + '_h_dist' for col in angle_df.columns]
+    angle_df.columns = [str(col) + '_angle' for col in angle_df.columns]
 
     return [horizontal_df, vertical_df, angle_df]
