@@ -106,5 +106,5 @@ class waze_data_analyzer:
         """
         matrices = retrieve_data.create_network_features_matrices(self.df_r) # horizontal, vertical, angle
         for i in range(0, len(matrices)):
-            self.df_tt = self.df_tt.merge(matrices[i], on = 'name', how = 'left', right_index = True)
+            self.df_tt = self.df_tt.merge(matrices[i], left_on = 'name', how = 'left', right_index = True)
         # print('columns on df_tt: ', list(self.df_tt.columns))
